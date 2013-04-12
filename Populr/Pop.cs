@@ -14,6 +14,7 @@ namespace Populr
 		public string slug { get; set; }
 		public string name { get; set; }
 		public string password { get; set; }
+		public string published_pop_url { get; set; }
 		public List<string> label_names { get; set; }
 		public List<string> unpopulated_api_tags { get; set; }
 		public List<string> unpopulated_api_regions { get; set; }
@@ -82,7 +83,19 @@ namespace Populr
 			if (_id == null)
 				Save ();
 			Pop published = _api.executeRequest<Pop>("/pops{id}/publish", Method.POST, null, null);
-
+			if (published != null) {
+				this.copyFrom(published);
+			}
+		}
+		
+		public void Unpublish ()
+		{
+			if (_id == null)
+				Save ();
+			Pop unpublished = _api.executeRequest<Pop>("/pops{id}/unpublish", Method.POST, null, null);
+			if (unpublished != null) {
+				this.copyFrom(unpublished);
+			}
 		}
 	}
 }

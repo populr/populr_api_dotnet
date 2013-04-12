@@ -1,8 +1,16 @@
 # Populr.me API .NET
 
-We've created a wrapper for the Populr API that makes it easy to use in .NET environments. To get started, take a look at the files in the Populr folder. You can add this project to your workspace as a dependency, or integrate the files directly into your project. The source makes extensive use of RestSharp, an open-source solution for REST service interfaces in .NET.
+
+## Setup
+
+We've created a wrapper for the Populr API that makes it easy to use in .NET environments. To get started, take a look at the files in the Populr folder. You can add this project to your workspace as a dependency, or integrate the files directly into your project. The source makes extensive use of RestSharp, an open-source solution for REST service interfaces in .NET. 
+
+RestSharp is included as a submodule. To pull it into the project after you pull from git, run `git submodule update`. You may have to remove the RestSharp project reference and add it again.
+
+
 
 The PopulrAPIConsole project shows an example use of the API. The important parts of the sample are explained below.
+
 
 ## Performing Common Tasks
 
@@ -51,5 +59,9 @@ The PopulrAPIConsole project shows an example use of the API. The important part
       // is set populated.
       newPop.Publish();
 
+
+## Development
+
+The C# code was authored in [MonoDevelop](http://monodevelop.com/), a Mac app similar to Microsoft Visual Studio. MonoDevelop is free and cross platform.
 
 ## We welcome pull requests!

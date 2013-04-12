@@ -46,7 +46,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Downloads\RestSharp-master\RestSharp\RestSharp.csproj">
+    <ProjectReference Include="..\Submodules\RestSharp\RestSharp\RestSharp.csproj">
       <Project>{2ECECFBF-5F3E-40EE-A963-72336DC7ABE2}</Project>
       <Name>RestSharp</Name>
     </ProjectReference>
