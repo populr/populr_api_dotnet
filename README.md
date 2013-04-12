@@ -12,14 +12,14 @@ The PopulrAPIConsole project shows an example use of the API. The important part
 
 ### Creating an Asset
 
-			FileStream stream = new FileStream("/my_picture.jpg", FileMode.Open);
-			Asset imageAsset = populr.createImageAsset(stream, "My Profile Picture", "http://www.apple.com/");
-			stream.Close ();
+      FileStream stream = new FileStream("/my_picture.jpg", FileMode.Open);
+      Asset imageAsset = populr.createImageAsset(stream, "My Profile Picture", "http://www.apple.com/");
+      stream.Close ();
 
 ### Listing Available Templates
 
-			List<PopTemplate> templates = populr.getTemplates();
-			Console.WriteLine ("Found " + templates.Count + " templates");
+      List<PopTemplate> templates = populr.getTemplates();
+      Console.WriteLine ("Found " + templates.Count + " templates");
 
 ### Creating a Pop based on a Template
 
@@ -32,12 +32,12 @@ The PopulrAPIConsole project shows an example use of the API. The important part
       newPop.title = "Wow a new pop!";
 
       // Always check to make sure regions and tags exist before populating them.
-			// Trying to populate a region that does not exist will result in an
+      // Trying to populate a region that does not exist will result in an
       // APIException being thrown.
-			if (newPop.HasUnpopulatedTag("personal_site"))
-				newPop.PopulateTag("personal_site", "http://www.gotow.net/");
+      if (newPop.HasUnpopulatedTag("personal_site"))
+        newPop.PopulateTag("personal_site", "http://www.gotow.net/");
 
-			if (newPop.HasUnpopulatedRegion("profile_image_region")) {
+      if (newPop.HasUnpopulatedRegion("profile_image_region")) {
         newPop.PopulateRegion("profile_image_region", imageAsset);
   		}
 
