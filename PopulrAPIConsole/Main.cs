@@ -9,7 +9,8 @@ namespace PopulrAPIConsole
 	{
 		public static void Main (string[] args)
 		{
-			PopulrAPI populr = new PopulrAPI ("LIIZAOPK-ITFEAWEB-HJYCKMPQ");
+			// Instantiate the populr api, with the optional host parameter set for localhost
+			PopulrAPI populr = new PopulrAPI ("LIIZAOPK-ITFEAWEB-HJYCKMPQ", "http://api.lvh.me:3000");
 
 			// Create a new pop from a template
 			List<PopTemplate> templates = populr.getTemplates();
@@ -18,13 +19,13 @@ namespace PopulrAPIConsole
 			newPop.title = "Wow a new pop!";
 
 			// Populate regions that are empty
-			if (p.HasUnpopulatedTag("personal_site"))
-				p.PopulateTag("personal_site", "http://www.gotow.net/");
+			if (newPop.HasUnpopulatedTag("personal_site"))
+				newPop.PopulateTag("personal_site", "http://www.gotow.net/");
 			
-			if (p.HasUnpopulatedRegion("profile_image_region")) {
+			if (newPop.HasUnpopulatedRegion("profile_image_region")) {
 				FileStream stream = new FileStream("/469118_10150714650073758_419024550_o.jpg", FileMode.Open);
 				Asset imageAsset = populr.createImageAsset(stream, "My Profile Picture", "http://www.apple.com/");
-				p.PopulateRegion("profile_image_region", imageAsset);
+				newPop.PopulateRegion("profile_image_region", imageAsset);
 				stream.Close ();
 			}
 

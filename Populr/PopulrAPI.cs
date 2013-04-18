@@ -17,6 +17,11 @@ namespace Populr
 		public string type { get; set; }
 		public string message { get; set; }
 
+		public APIException (string err)
+		{
+			message = err;
+		}
+
 		public APIException (APIError err)
 		{
 			type = err.error_type;
@@ -27,10 +32,12 @@ namespace Populr
 	public class PopulrAPI
 	{
 		RestClient client;
+		String apiVersion;
 
-		public PopulrAPI(String api_key, String host = "api.lvh.me:3000")
+		public PopulrAPI(String api_key, String host = "https://api.populr.me")
 		{
-			client = new RestClient("http://" + host);
+			apiVersion = "v0";
+			client = new RestClient(host);
 			client.Authenticator = new HttpBasicAuthenticator(api_key, "");
 		}
 
@@ -86,7 +93,7 @@ namespace Populr
 
 		internal T executeRequest<T> (string path, Method method, string id, object body) where T: Model, new()
 		{
-			var request = new RestRequest (path, method);
+			var request = new RestRequest ("/" + apiVersion + path, method);
 			if (id != null)
 				request.AddUrlSegment ("id", id);
 			request.OnBeforeDeserialization = s => checkForError(s);
@@ -105,7 +112,7 @@ namespace Populr
 
 		internal List<T> executeIndexRequest<T>(string path) where T : Model, new()
 		{
-			var request = new RestRequest (path, Method.GET);
+			var request = new RestRequest ("/" + apiVersion + path, Method.GET);
 			request.OnBeforeDeserialization = s => checkForError(s);
 			request.RequestFormat = DataFormat.Json;
 			RestResponse<List<T>> response = (RestResponse<List<T>>)client.Execute<List<T>>(request);
@@ -117,7 +124,7 @@ namespace Populr
 
 		internal T executeFilePostRequest<T>(string path, FileStream stream, string title, string link) where T: Model, new()
 		{
-			var request = new RestRequest (path, Method.POST);
+			var request = new RestRequest ("/" + apiVersion + path, Method.POST);
 			request.OnBeforeDeserialization = s => checkForError(s);
 			request.RequestFormat = DataFormat.Json;
 			request.AddParameter("title", title);
