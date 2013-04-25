@@ -29,79 +29,68 @@ namespace Populr
 		}
 	}
 
-	public class PopulrAPI
+	public class PopulrAPI : RestfulObject
 	{
-		RestClient client;
-		String apiVersion;
+		RestClient _client;
+		String _apiVersion;
 
 		public PopulrAPI(String api_key, String host = "https://api.populr.me")
 		{
-			apiVersion = "v0";
-			client = new RestClient(host);
-			client.Authenticator = new HttpBasicAuthenticator(api_key, "");
+			if ((host.Contains("https") == false) && (host.Contains("localhost") || host.Contains("lvh")) == false)
+				throw new APIException("Please connect to the Populr.me API via HTTPS - we use HTTP basic auth!");
+
+			_apiVersion = "v0";
+			_api = this;
+
+			_client = new RestClient(host);
+			_client.Authenticator = new HttpBasicAuthenticator(api_key, "");
 		}
 
 		// ---- Pop Templates ----//
 
-		public List<PopTemplate> getTemplates ()
+		public RestfulModelCollection<Template> Templates ()
 		{
-			return executeIndexRequest<PopTemplate> ("/templates");
+			return new RestfulModelCollection<Template> (this);
 		}
-
-		public PopTemplate getTemplate(string id)
-		{
-			return executeRequest<PopTemplate>("/templates/{id}", Method.GET, id, null);
-		}
-
 
 		// ---- Pops ----//
-
-		public Pop getPop(string id)
+		
+		public RestfulModelCollection<Pop> Pops ()
 		{
-			return executeRequest<Pop>("/pops/{id}", Method.GET, id, null);
-		}
-
-		public List<Pop> getPops()
-		{
-			return executeIndexRequest<Pop>("/pops");
+			return new RestfulModelCollection<Pop> (this);
 		}
 
 		// ---- Assets ----//
 
-		public ImageAsset getImageAsset (string id)
+		public RestfulModelCollection<DocumentAsset> Documents ()
 		{
-			return executeRequest<ImageAsset>("/images", Method.GET, id, null);
+			return new RestfulModelCollection<DocumentAsset> (this, "documents");
+		}
+		
+		public RestfulModelCollection<ImageAsset> Images ()
+		{
+			return new RestfulModelCollection<ImageAsset> (this, "images");
+		}
+		
+		public RestfulModelCollection<EmbedAsset> Embeds ()
+		{
+			return new RestfulModelCollection<EmbedAsset> (this, "embeds");
 		}
 
-		public ImageAsset createImageAsset (FileStream stream, string title, string link)
+		public override string Path (Method method = Method.GET)
 		{
-			return executeFilePostRequest<ImageAsset>("/images", stream, title, link);
+			return "/" + _apiVersion;
 		}
 
-		public DocumentAsset getDocumentAsset (string id)
+		internal T executeRequest<T> (string path, Method method, object body = null) where T: RestfulModel, new()
 		{
-			return executeRequest<DocumentAsset>("/images", Method.GET, id, null);
-		}
-
-		public DocumentAsset createDocumentAsset (FileStream stream, string title)
-		{
-			return executeFilePostRequest<DocumentAsset>("/documents", stream, title, null);
-		}
-
-
-
-
-		internal T executeRequest<T> (string path, Method method, string id, object body) where T: Model, new()
-		{
-			var request = new RestRequest ("/" + apiVersion + path, method);
-			if (id != null)
-				request.AddUrlSegment ("id", id);
+			var request = new RestRequest (path, method);
 			request.OnBeforeDeserialization = s => checkForError(s);
 			request.RequestFormat = DataFormat.Json;
 			if (body != null)
 				request.AddBody(body);
 
-			RestResponse<T> response = (RestResponse<T>)client.Execute<T>(request);
+			RestResponse<T> response = (RestResponse<T>)_client.Execute<T>(request);
 			T obj = (T)response.Data;
 			if ((obj == null) || (obj._id == null))
 				return null;
@@ -110,21 +99,9 @@ namespace Populr
 			return obj;
 		}
 
-		internal List<T> executeIndexRequest<T>(string path) where T : Model, new()
+		internal T executeFilePostRequest<T>(string path, FileStream stream, string title, string link) where T: RestfulModel, new()
 		{
-			var request = new RestRequest ("/" + apiVersion + path, Method.GET);
-			request.OnBeforeDeserialization = s => checkForError(s);
-			request.RequestFormat = DataFormat.Json;
-			RestResponse<List<T>> response = (RestResponse<List<T>>)client.Execute<List<T>>(request);
-			List<T> list = response.Data;
-			foreach (T item in list)
-				item._api = this;
-			return list;
-		}
-
-		internal T executeFilePostRequest<T>(string path, FileStream stream, string title, string link) where T: Model, new()
-		{
-			var request = new RestRequest ("/" + apiVersion + path, Method.POST);
+			var request = new RestRequest (path, Method.POST);
 			request.OnBeforeDeserialization = s => checkForError(s);
 			request.RequestFormat = DataFormat.Json;
 			request.AddParameter("title", title);
@@ -135,11 +112,26 @@ namespace Populr
 			stream.Read(byteArray, 0, (int)stream.Length);
 			request.AddFile("file", byteArray, "file", "application/octet-stream");
 
-			RestResponse<T> response = (RestResponse<T>)client.Execute<T>(request);
+			RestResponse<T> response = (RestResponse<T>)_client.Execute<T>(request);
 			T obj = (T)response.Data;
 			if ((obj == null) || (obj._id == null))
 				return null;
 			return obj;
+		}
+		
+		internal List<T> executeIndexRequest<T>(string path, int offset = 0, int count = 50) where T : RestfulModel, new()
+		{
+			var request = new RestRequest (path + "?offset="+offset + "&count="+count, Method.GET);
+			request.OnBeforeDeserialization = s => checkForError(s);
+			request.RequestFormat = DataFormat.Json;
+			RestResponse<List<T>> response = (RestResponse<List<T>>)_client.Execute<List<T>>(request);
+			List<T> list = response.Data;
+			if (list == null)
+				return new List<T>();
+
+			foreach (T item in list)
+				item._api = this;
+			return list;
 		}
 
 		internal void checkForError (IRestResponse response)
@@ -147,8 +139,10 @@ namespace Populr
 			response.ContentType = "application/json";
 			if (response.Content.Contains ("\"error_type\":")) {
 				APIError details = new RestSharp.Deserializers.JsonDeserializer().Deserialize<APIError>(response);
-				if (details.error_type != "not_found")
+				if (details.error_type != "not_found") {
+					Console.WriteLine(details.error);
 					throw new APIException (details);
+				}
 		    }
 		}
 

@@ -40,9 +40,11 @@
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PopulrAPI.cs" />
     <Compile Include="Pop.cs" />
-    <Compile Include="Model.cs" />
     <Compile Include="Asset.cs" />
-    <Compile Include="PopTemplate.cs" />
+    <Compile Include="RestfulModel.cs" />
+    <Compile Include="RestfulModelCollection.cs" />
+    <Compile Include="Template.cs" />
+    <Compile Include="RestfulObject.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <ItemGroup>

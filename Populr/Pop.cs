@@ -5,7 +5,7 @@ using Populr;
 
 namespace Populr
 {
-	public class Pop : Model
+	public class Pop : RestfulModel
 	{
 		public string template_id { get; set; }
 		public string title { get; set; }
@@ -17,7 +17,7 @@ namespace Populr
 		public string published_pop_url { get; set; }
 		public List<string> label_names { get; set; }
 		public List<string> unpopulated_api_tags { get; set; }
-		public List<string> unpopulated_api_regions { get; set; }
+		public Dictionary<string, Dictionary<string, string>> unpopulated_api_regions { get; set; }
 
 		internal Dictionary<string, string> _newly_populated_tags;
 		internal Dictionary<string, List<string>> _newly_populated_regions;
@@ -25,14 +25,51 @@ namespace Populr
 		public Pop ()
 		{
 			// the pop is auto-inflated from RESTSharp's JSON deserializer
-			throw new APIException("You must create a pop from a template.");
+			// throw new APIException("You must create a pop from a template.");
 		}
-		
-		public Pop (PopTemplate template)
+
+		public Pop (RestfulObject parent)
+		{
+			if (parent.Parent () == null)
+				throw new Exception("You must create a pop from a template's pops collection.");
+			Setup((Template)parent.Parent());
+		}
+
+		public Pop (Template template)
+		{
+			Setup (template);
+		}
+
+		internal void Setup(Template template) 
 		{
 			_api = template._api;
+			_parent = template.Pops();
 			template_id = template._id;
+			unpopulated_api_tags = template.api_tags;
+			unpopulated_api_regions = new Dictionary<string, Dictionary<string, string>>();
+			foreach (KeyValuePair<string, Dictionary<string, string>> entry in template.api_regions)
+				unpopulated_api_regions.Add(entry.Key, entry.Value);
+			title = template.title;
+			name = template.name;
 		}
+
+		public override object APIRepresentation ()
+		{
+			return new PopulrAPI.APIPopTransaction(this);
+		}
+
+		public override string Path (Method method = Method.GET) 
+		{
+			if ((method == Method.POST) || (method == Method.PUT)){
+				if (_id != null)
+					return _api.Path () + "/pops/"+ _id;
+				else
+					return _api.Path () + "/pops";
+			} else {
+				return base.Path(method);
+			}
+		}
+		
 
 		public bool HasUnpopulatedTag (string tag)
 		{
@@ -48,11 +85,13 @@ namespace Populr
 
 		public bool HasUnpopulatedRegion (string region_identifier)
 		{
-			return unpopulated_api_regions.Contains(region_identifier);
+			return unpopulated_api_regions.ContainsKey(region_identifier);
 		}
 
 		public void PopulateRegion (string region_identifier, Asset asset)
 		{
+			if ((asset == null) || (asset._id == null))
+				throw new APIException("Please save the asset before adding it to a pop.");
 			PopulateRegion(region_identifier, asset._id);
 		}
 
@@ -65,26 +104,13 @@ namespace Populr
 			_newly_populated_regions [region_identifier].Add(assetID);
 		}
 
-		public void Save ()
-		{
-			Pop saved = null;
-			if (_id != null)
-				saved = _api.executeRequest<Pop>("/pops/{id}", Method.PUT, _id, new PopulrAPI.APIPopTransaction(this));
-			else
-				saved = _api.executeRequest<Pop>("/pops", Method.POST, null, new PopulrAPI.APIPopTransaction(this));
-
-			if (saved != null) {
-				this.copyFrom(saved);
-			}
-		}
-
 		public void Publish ()
 		{
 			if (_id == null)
 				Save ();
-			Pop published = _api.executeRequest<Pop>("/pops{id}/publish", Method.POST, null, null);
+			Pop published = _api.executeRequest<Pop>(this.Path(Method.POST) + "/publish", Method.POST, null);
 			if (published != null) {
-				this.copyFrom(published);
+				this.CopyFrom(published);
 			}
 		}
 		
@@ -92,9 +118,9 @@ namespace Populr
 		{
 			if (_id == null)
 				Save ();
-			Pop unpublished = _api.executeRequest<Pop>("/pops{id}/unpublish", Method.POST, null, null);
+			Pop unpublished = _api.executeRequest<Pop>(this.Path(Method.POST) + "/unpublish", Method.POST, null);
 			if (unpublished != null) {
-				this.copyFrom(unpublished);
+				this.CopyFrom(unpublished);
 			}
 		}
 	}
