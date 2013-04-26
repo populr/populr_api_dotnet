@@ -18,46 +18,84 @@ The PopulrAPIConsole project shows an example use of the API. The important part
 
       PopulrAPI populr = new PopulrAPI ("LIIZAOPK-ITFEAWEB-HJYCKMPQ");
 
-### Creating an Asset
-
-      FileStream stream = new FileStream("/my_picture.jpg", FileMode.Open);
-      Asset imageAsset = populr.createImageAsset(stream, "My Profile Picture", "http://www.apple.com/");
-      stream.Close ();
 
 ### Listing Available Templates
 
-      List<PopTemplate> templates = populr.getTemplates();
+      // fetch all available templates
+      List<Template> templates = populr.Templates().All();
+      
+      // or iterate over the collection
+      foreach (Template template in populr.Templates())
+      	  Console.WriteLine(template._id);
+      
+      // or fetch a specific range (offset, count)
+      List<Template> page2 = populr.Templates().Range(20, 10);
+      
       Console.WriteLine ("Found " + templates.Count + " templates");
+
+
+### Uploading an Asset
+
+      FileStream stream = new FileStream("/my_picture.jpg", FileMode.Open);
+	  Asset image = (Asset)populr.Images().Build(stream, "My Profile Picture").Save();
+      stream.Close ();
+
 
 ### Creating a Pop based on a Template
 
-      // Note: All pops must be created based on an existing template setup in your Populr account.
-      Pop newPop = new Pop(templates[0]);
+      // Note: All pops must be created based on an existing template in your Populr account.
+      Pop pop = new Pop(templates[0]);
+      
+      // Or, create one ActiveRecord-style!
+      Template template = populr.Templates().First();
+      Pop pop = template.Pops().Build();
 
-### Populating Pops
+### Filling a Pop with Content
 
       // Basic attributes can be modified directly.
-      newPop.title = "Wow a new pop!";
-
+      pop.title = "Wow a new pop!";
+      pop.slug = "new-pop";
+      
       // Always check to make sure regions and tags exist before populating them.
       // Trying to populate a region that does not exist will result in an
       // APIException being thrown.
-      if (newPop.HasUnpopulatedTag("personal_site"))
-        newPop.PopulateTag("personal_site", "http://www.gotow.net/");
+      if (pop.HasUnpopulatedTag("personal_site"))
+        pop.PopulateTag("personal_site", "http://www.gotow.net/");
 
-      if (newPop.HasUnpopulatedRegion("profile_image_region")) {
-        newPop.PopulateRegion("profile_image_region", imageAsset);
-  		}
+      if (pop.HasUnpopulatedRegion("profile_image_region")) {
+        pop.PopulateRegion("profile_image_region", imageAsset);
+      }
 
       // Synchronously saves changes. An APIException will be thrown if validation fails.
       // For example, if you've assigned the pop the same slug as another pop.
-      newPop.Save ();
+      pop.Save ();
 
 ### Publishing a Pop
 
       // Publishes the pop immediately. After calling this method, the pop's published_pop_url
       // is set populated.
-      newPop.Publish();
+      pop.Publish();
+      
+      // Print the published pop URL
+      Console.WriteLine("The pop is published at " + pop.published_pop_url);
+
+### Creating Tracers
+
+	  Pop pop = populr.Pops().Find("51782e69dd02dc70ed00000d");
+ 	  Tracer tracer = pop.Tracers().Build();
+   	  tracer.name = "Tracer for bengotow@gmail.com";
+	  tracer.Save();
+	  
+      // Print the published pop URL
+      Console.WriteLine("The traced pop URL is" + pop.published_pop_url + "?" + tracer.code);
+
+
+### Tracer Analytics
+
+	  Console.WriteLine(tracer.Views() + " views");
+	  Console.WriteLine(tracer.Clicks() + " clicks");
+	  Console.WriteLine(tracer.ClicksForLink("http://www.apple.com/") + "on the http://www.apple.com/ link"");
+	  Console.WriteLine(tracer.ClicksForRegion("profile_image_region") + " clicks on the profile image");
 
 
 ## Development
