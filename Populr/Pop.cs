@@ -60,7 +60,7 @@ namespace Populr
 
 		public override string Path (Method method = Method.GET) 
 		{
-			if ((method == Method.POST) || (method == Method.PUT)){
+			if ((method == Method.POST) || (method == Method.PUT) || (method == Method.DELETE)){
 				if (_id != null)
 					return _api.Path () + "/pops/"+ _id;
 				else
@@ -69,7 +69,13 @@ namespace Populr
 				return base.Path(method);
 			}
 		}
-		
+
+		public RestfulModelCollection<Tracer> Tracers ()
+		{
+			if (_id == null)
+				throw new APIException("unsaved", "Sorry, you can't create tracers for an unsaved pop. Call pop.Save() first.");
+			return new RestfulModelCollection<Tracer>(this);
+		}
 
 		public bool HasUnpopulatedTag (string tag)
 		{
@@ -91,7 +97,7 @@ namespace Populr
 		public void PopulateRegion (string region_identifier, Asset asset)
 		{
 			if ((asset == null) || (asset._id == null))
-				throw new APIException("Please save the asset before adding it to a pop.");
+				throw new APIException("unsaved", "Please save the asset before adding it to a pop.");
 			PopulateRegion(region_identifier, asset._id);
 		}
 

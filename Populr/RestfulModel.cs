@@ -13,7 +13,7 @@ namespace Populr
 
 		public override string Path (Method method = Method.GET)
 		{
-			string path = (_parent != null) ? _parent.Path() + "/" : "/";
+			string path = (_parent != null) ? _parent.Path(method) + "/" : "/";
 			if (_id != null)
 				path += _id;
 			return path;

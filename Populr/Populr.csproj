@@ -45,6 +45,7 @@
     <Compile Include="RestfulModelCollection.cs" />
     <Compile Include="Template.cs" />
     <Compile Include="RestfulObject.cs" />
+    <Compile Include="Tracer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <ItemGroup>

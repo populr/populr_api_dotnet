@@ -16,7 +16,7 @@ namespace Populr
 
 		public override string Path(Method method = Method.GET) {
 			if (_parent != null)
-				return _parent.Path() + "/" +  _collectionName;
+				return _parent.Path(method) + "/" +  _collectionName;
 			else
 				return _collectionName;
 		}
@@ -60,17 +60,20 @@ namespace Populr
 		}
 
 		public void Delete(string id){
-			_api.executeRequest<TModel>(Path(), RestSharp.Method.DELETE, id);
+			_api.executeRequest<TModel>(Path()+"/"+id, RestSharp.Method.DELETE);
 		}
 
 		public void Delete(TModel model) {
-			_api.executeRequest<TModel>(Path(), RestSharp.Method.DELETE, model._id);
+			_api.executeRequest<TModel>(Path()+"/"+model._id, RestSharp.Method.DELETE);
 		}
 
 		public TModel Find(string id) {
 			if (id == null)
 				return null;
-			return _api.executeRequest<TModel>(Path(), RestSharp.Method.GET, id);
+			TModel model = _api.executeRequest<TModel>(Path()+"/"+id, RestSharp.Method.GET);
+			if (model != null)
+				model._parent = this;
+			return model;
 		}
 
 		public TModel Build(params object[] args) {

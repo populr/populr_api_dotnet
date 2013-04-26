@@ -17,8 +17,9 @@ namespace Populr
 		public string type { get; set; }
 		public string message { get; set; }
 
-		public APIException (string err)
+		public APIException (string t, string err)
 		{
+			type = t;
 			message = err;
 		}
 
@@ -37,7 +38,7 @@ namespace Populr
 		public PopulrAPI(String api_key, String host = "https://api.populr.me")
 		{
 			if ((host.Contains("https") == false) && (host.Contains("localhost") || host.Contains("lvh")) == false)
-				throw new APIException("Please connect to the Populr.me API via HTTPS - we use HTTP basic auth!");
+				throw new APIException("authentication", "Please connect to the Populr.me API via HTTPS - we use HTTP basic auth!");
 
 			_apiVersion = "v0";
 			_api = this;
@@ -85,7 +86,7 @@ namespace Populr
 		internal T executeRequest<T> (string path, Method method, object body = null) where T: RestfulModel, new()
 		{
 			var request = new RestRequest (path, method);
-			request.OnBeforeDeserialization = s => checkForError(s);
+			request.OnBeforeDeserialization = s => CheckForError(s);
 			request.RequestFormat = DataFormat.Json;
 			if (body != null)
 				request.AddBody(body);
@@ -102,7 +103,7 @@ namespace Populr
 		internal T executeFilePostRequest<T>(string path, FileStream stream, string title, string link) where T: RestfulModel, new()
 		{
 			var request = new RestRequest (path, Method.POST);
-			request.OnBeforeDeserialization = s => checkForError(s);
+			request.OnBeforeDeserialization = s => CheckForError(s);
 			request.RequestFormat = DataFormat.Json;
 			request.AddParameter("title", title);
 			request.AddParameter("link", link);
@@ -122,7 +123,7 @@ namespace Populr
 		internal List<T> executeIndexRequest<T>(string path, int offset = 0, int count = 50) where T : RestfulModel, new()
 		{
 			var request = new RestRequest (path + "?offset="+offset + "&count="+count, Method.GET);
-			request.OnBeforeDeserialization = s => checkForError(s);
+			request.OnBeforeDeserialization = s => CheckForError(s);
 			request.RequestFormat = DataFormat.Json;
 			RestResponse<List<T>> response = (RestResponse<List<T>>)_client.Execute<List<T>>(request);
 			List<T> list = response.Data;
@@ -134,8 +135,11 @@ namespace Populr
 			return list;
 		}
 
-		internal void checkForError (IRestResponse response)
+		internal void CheckForError (IRestResponse response)
 		{
+			if (response.ErrorException != null)
+				throw response.ErrorException;
+
 			response.ContentType = "application/json";
 			if (response.Content.Contains ("\"error_type\":")) {
 				APIError details = new RestSharp.Deserializers.JsonDeserializer().Deserialize<APIError>(response);
